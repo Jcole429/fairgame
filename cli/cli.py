@@ -71,6 +71,7 @@ def main():
 
 
 @click.command()
+@click.option("--password", default=None, type=str, help="Credential file password")
 @click.option("--no-image", is_flag=True, help="Do no load images")
 @click.option("--headless", is_flag=True)
 @click.option(
@@ -110,6 +111,7 @@ def main():
 )
 @notify_on_crash
 def amazon(
+    password,
     no_image,
     headless,
     test,
@@ -128,6 +130,7 @@ def amazon(
         selenium_utils.yes_amazon_image()
 
     amzn_obj = Amazon(
+        credential_password=password,
         headless=headless,
         notification_handler=notification_handler,
         checkshipping=checkshipping,

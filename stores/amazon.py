@@ -166,6 +166,7 @@ class Amazon:
     def __init__(
         self,
         notification_handler,
+        credential_password,
         headless=False,
         checkshipping=False,
         random_delay=False,
@@ -207,7 +208,7 @@ class Amazon:
                 raise
 
         if os.path.exists(CREDENTIAL_FILE):
-            credential = load_encrypted_config(CREDENTIAL_FILE)
+            credential = load_encrypted_config(CREDENTIAL_FILE, credential_password)
             self.username = credential["username"]
             self.password = credential["password"]
         else:
