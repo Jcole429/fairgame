@@ -73,6 +73,7 @@ def load_encrypted_config(config_path, credential_password=None):
                 decrypted = decrypt(data, credential_password)
             else:
                 password = stdiomask.getpass(prompt="Credential file password: ", mask="*")
+                decrypted = decrypt(data, credential_password)
             return json.loads(decrypted)
         else:
             log.info(
