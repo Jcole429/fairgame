@@ -1,20 +1,12 @@
 {
   "asin_groups": 1,
   "asin_list_1": [
-    "B08HBR7QBM",
-    "B08HBTJMLJ",
-    "B08HH5WF97",
-    "B08HJNKT3P",
-    "B08HJS2JLJ",
-    "B08HJTH61J",
-    "B08HR3DPGW",
-    "B08HR3Y5GQ",
-    "B08HR4RJ3Q",
-    "B08HR55YB5",
-    "B08HR5SXPS",
-    "B08HR6FMF3",
-    "B08HR7SV3M",
-    "B08R14DNGN"
+    "B08HBTJMLJ"
+    ,"B08HJNKT3P"
+    ,"B08HH5WF97"
+    ,"B08HJS2JLJ"
+    ,"B08HR3Y5GQ"
+    ,"B08HR7SV3M"
   ],
   "reserve_min_1": 700,
   "reserve_max_1": 875,
