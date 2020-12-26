@@ -61,7 +61,7 @@ def create_encrypted_config(data, file_path):
         exit(0)
 
 
-def load_encrypted_config(config_path, password=None):
+def load_encrypted_config(config_path):
     """Decrypts a previously encrypted credential file and returns the contents back
     to the calling thread."""
     log.info("Reading credentials from: " + config_path)
@@ -69,11 +69,8 @@ def load_encrypted_config(config_path, password=None):
         data = json_file.read()
     try:
         if "nonce" in data:
-            if password is not None:
-                decrypted = decrypt(data, password)
-            else:
-                password = stdiomask.getpass(prompt="Credential file password: ", mask="*")
-                decrypted = decrypt(data, password)
+            password = stdiomask.getpass(prompt="Credential file password: ", mask="*")
+            decrypted = decrypt(data, password)
             return json.loads(decrypted)
         else:
             log.info(
