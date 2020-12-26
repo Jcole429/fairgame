@@ -2,7 +2,17 @@ from datetime import datetime
 from functools import wraps
 from signal import signal, SIGINT
 
-import click
+try:
+    import click
+except ModuleNotFoundError:
+    print(
+        "You should try running pipenv shell and pipenv install per the install instructions"
+    )
+    print("Or you should only use Python 3.8.X per the instructions.")
+    print("If you are attempting to run multiple bots, this is not supported.")
+    print("You are on your own to figure this out.")
+    exit(0)
+import time
 
 from notifications.notifications import NotificationHandler, TIME_FORMAT
 from stores.amazon import Amazon
@@ -71,9 +81,8 @@ def main():
 
 
 @click.command()
-@click.option("--password", default=None, type=str, help="Credential file password")
-@click.option("--no-image", is_flag=True, help="Do no load images")
-@click.option("--headless", is_flag=True)
+@click.option("--no-image", is_flag=True, help="Do not load images")
+@click.option("--headless", is_flag=True, help="Unsupported headless mode. GLHF")
 @click.option(
     "--test",
     is_flag=True,
@@ -97,7 +106,6 @@ def main():
     is_flag=True,
     help="Show used items in search listings.",
 )
-@click.option("--random-delay", is_flag=True, help="Set delay to a random interval")
 @click.option("--single-shot", is_flag=True, help="Quit after 1 successful purchase")
 @click.option(
     "--no-screenshots",
@@ -109,9 +117,38 @@ def main():
     is_flag=True,
     help="Disable Discord Rich Presence functionallity",
 )
+@click.option(
+    "--disable-sound",
+    is_flag=True,
+    default=False,
+    help="Disable local sounds.  Does not affect Apprise notification " "sounds.",
+)
+@click.option(
+    "--slow-mode",
+    is_flag=True,
+    default=False,
+    help="Uses normal page load strategy for selenium. Default is none",
+)
+@click.option(
+    "--p",
+    type=str,
+    default=None,
+    help="Pass in encryption file password as argument",
+)
+@click.option(
+    "--log-stock-check",
+    is_flag=True,
+    default=False,
+    help="writes stock check information to terminal and log",
+)
+@click.option(
+    "--shipping-bypass",
+    is_flag=True,
+    default=False,
+    help="Will attempt to click ship to address button. USE AT YOUR OWN RISK!",
+)
 @notify_on_crash
 def amazon(
-    password,
     no_image,
     headless,
     test,
@@ -119,29 +156,41 @@ def amazon(
     checkshipping,
     detailed,
     used,
-    random_delay,
     single_shot,
     no_screenshots,
     disable_presence,
+    disable_sound,
+    slow_mode,
+    p,
+    log_stock_check,
+    shipping_bypass,
 ):
-    if no_image:
-        selenium_utils.no_amazon_image()
-    else:
-        selenium_utils.yes_amazon_image()
+
+    notification_handler.sound_enabled = not disable_sound
+    if not notification_handler.sound_enabled:
+        log.info("Local sounds have been disabled.")
 
     amzn_obj = Amazon(
-        credential_password=password,
         headless=headless,
         notification_handler=notification_handler,
         checkshipping=checkshipping,
-        random_delay=random_delay,
         detailed=detailed,
         used=used,
         single_shot=single_shot,
         no_screenshots=no_screenshots,
         disable_presence=disable_presence,
+        slow_mode=slow_mode,
+        encryption_pass=p,
+        no_image=no_image,
+        log_stock_check=log_stock_check,
+        shipping_bypass=shipping_bypass,
     )
-    amzn_obj.run(delay=delay, test=test)
+    try:
+        amzn_obj.run(delay=delay, test=test)
+    except RuntimeError:
+        del amzn_obj
+        log.error("Exiting Program...")
+        time.sleep(5)
 
 
 @click.command()
@@ -155,14 +204,34 @@ def bestbuy(sku, headless):
     bb.run_item()
 
 
+@click.option(
+    "--disable-sound",
+    is_flag=True,
+    default=False,
+    help="Disable local sounds.  Does not affect Apprise notification " "sounds.",
+)
 @click.command()
-def test_notifications():
+def test_notifications(disable_sound):
     enabled_handlers = ", ".join(notification_handler.enabled_handlers)
-    time = datetime.now().strftime(TIME_FORMAT)
+    message_time = datetime.now().strftime(TIME_FORMAT)
     notification_handler.send_notification(
-        f"Beep boop. This is a test notification from FairGame. Sent {time}."
+        f"Beep boop. This is a test notification from FairGame. Sent {message_time}."
     )
     log.info(f"A notification was sent to the following handlers: {enabled_handlers}")
+    if not disable_sound:
+        log.info("Testing notification sound...")
+        notification_handler.play_notify_sound()
+        time.sleep(2)  # Prevent audio overlap
+        log.info("Testing alert sound...")
+        notification_handler.play_alarm_sound()
+        time.sleep(2)  # Prevent audio overlap
+        log.info("Testing purchase sound...")
+        notification_handler.play_purchase_sound()
+    else:
+        log.info("Local sounds disabled for this test.")
+
+    # Give the notifications a chance to get out before we quit
+    time.sleep(5)
 
 
 signal(SIGINT, handler)
